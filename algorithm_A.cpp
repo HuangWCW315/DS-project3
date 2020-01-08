@@ -7,6 +7,7 @@ using namespace std;
 
 #define WIN_GAME 100000000
 #define LOSE_GAME -100000000
+#define ILLEGAL -200000000
 #define WIN 1
 #define LOSE 2
 #define NOT_END 3
@@ -83,7 +84,7 @@ int evaluate(int row, int col, Board board, Player player, int depth)
     char player_color = player.get_color();
 
     if (board.get_cell_color(row, col) != player_color && board.get_cell_color(row, col) != 'w')
-        return LOSE_GAME;
+        return ILLEGAL;
     board.place_orb(row, col, &player);
     int result = game_result(board, player);
     if (result == WIN) score += WIN_GAME;
