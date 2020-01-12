@@ -15,7 +15,7 @@ using namespace std;
 #define NOT_END 3
 #define CORNER 1
 #define EDGE 2
-
+#define INT_INFINITY 1000000000
 #define MY true
 #define ENEMY false
 /******************************************************
@@ -43,7 +43,9 @@ int check_adjency_critical(int row, int col, Board board, char player);
 int block_type(int row, int col);
 
 int Find(int row, int col, Board board, Player player, Player enemy,int depth, int T);
-int find(int row, int col, Board board, Player player, Player enemy, bool choose, int depth,int T);
+int find(int row, int col, Board board, Player player, Player enemy, bool choose, int depth,int T, int alpha, int beta);
+    // T should be odd
+
 void algorithm_A(Board board, Player player, int index[])
 {
     srand(time(NULL));
@@ -125,7 +127,8 @@ void algorithm_F(Board board, Player player, int index[]){
     char color = player.get_color();
     char enemy_color;
     int score = ILLEGAL;
-
+    int alpha = -(INT_INFINITY);
+    int beta = INT_INFINITY;
     if (color == RED)   enemy_color = BLUE;
     else enemy_color = RED;
 
@@ -135,13 +138,15 @@ void algorithm_F(Board board, Player player, int index[]){
         for (int j = 0; j < COL; j++)
         {
             int new_score;
-            if (score < (new_score = find(i, j, board, player, enemy, ENEMY, 0, 1)) && new_score != GAME_BROKEN)
+            if (score < (new_score = find(i, j, board, player, enemy, ENEMY, 0, 1, alpha, beta)) && new_score != GAME_BROKEN)
             {
 
                     index[0] = i;
                     index[1] = j;
                     score = new_score;
             }
+            if (alpha < new_score)  alpha = new_score;
+            if (beta <= alpha)  return;
             
             
   //          cout << "F  (" << i << ',' << j << ") : " << new_score << endl;      
@@ -336,7 +341,7 @@ int Find(int row, int col, Board board, Player player, Player enemy, int depth, 
     
 }
 
-int find(int row, int col, Board board, Player player, Player enemy, bool choose, int depth,int T)
+int find(int row, int col, Board board, Player player, Player enemy, bool choose, int depth, int T, int alpha, int beta)
 {
     int score = ILLEGAL;
     if (depth == T)
@@ -367,11 +372,13 @@ int find(int row, int col, Board board, Player player, Player enemy, bool choose
         for (int i = 0; i < ROW; i++)
             for (int j = 0; j < COL; j++)
             {
-                int new_score;
-                if (score < (new_score = find(i, j, board, player, enemy, !choose, depth + 1, T)) && new_score != GAME_BROKEN)
+                int new_score = find(i, j, board, player, enemy, !choose, depth + 1, T, alpha, beta);
+                if (score < new_score && new_score != GAME_BROKEN)
                 {
                     score = new_score;
                 }
+                if (alpha < new_score)  alpha = new_score;
+                if (beta <= alpha)  return score;
             }
         return score;
     
@@ -386,11 +393,13 @@ int find(int row, int col, Board board, Player player, Player enemy, bool choose
         for (int i = 0; i < ROW; i++)
             for (int j = 0; j < COL; j++)
             {
-                int new_score;
-                if (score > (new_score = find(i, j, board, player, enemy, !choose, depth + 1, T)) && new_score >= ILLEGAL)
+                int new_score = find(i, j, board, player, enemy, !choose, depth + 1, T, alpha, beta);
+                if (score > new_score && new_score >= ILLEGAL)
                 {
                     score = new_score;
                 }
+                if (beta > new_score && new_score > ILLEGAL)  beta = new_score;
+                if (beta <= alpha)  return score;
             }
         return score;
     
