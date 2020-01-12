@@ -42,64 +42,66 @@ int game_result(Board board, Player player);
 int check_adjency_critical(int row, int col, Board board, char player);
 int block_type(int row, int col);
 
-int Find(int row, int col, Board board, Player player, Player enemy,int depth, int T);
+int check_adjency_critical_connected(bool chosen[][COL], int row, int col, Board board, char player);
+
 int find(int row, int col, Board board, Player player, Player enemy, bool choose, int depth,int T, int alpha, int beta);
     // T should be odd
 
-void algorithm_A(Board board, Player player, int index[])
+void algorithm_H(Board board, Player player, int index[])
 {
     srand(time(NULL));
     int row, col;
     char color = player.get_color();
     char enemy_color;
     int score = ILLEGAL;
-
+    int alpha = -(INT_INFINITY);
+    int beta = INT_INFINITY;
     if (color == RED)   enemy_color = BLUE;
     else enemy_color = RED;
 
     Player enemy(enemy_color);
 
-/*    for (int i = 0; i < ROW; i++)
+    for (int i = 0; i < ROW; i++)
         for (int j = 0; j < COL; j++)
         {
             int new_score;
-            if (score < (new_score = Find(i, j, board, player, enemy, 0, 3)) && new_score != GAME_BROKEN)
+            if (score < (new_score = find(i, j, board, player, enemy, ENEMY, 0, 3, alpha, beta)) && new_score != GAME_BROKEN)
             {
 
                     index[0] = i;
                     index[1] = j;
                     score = new_score;
             }
-   */         
-            
- //           cout << "A  (" << i << ',' << j << ") : " << new_score << endl;      
-   //     }
-  //      cout << "(row, col) = (" << index[0] << ',' << index[1] << ")\n";
-
-  //          cout << "A : "<< score << endl;
-  //          cout << "(row, col) = (" << index[0] << ',' << index[1] << ")\n";
- //           system("pause");  
-    for (int i = 0; i < ROW; i++)
-        for (int j = 0; j < COL; j++)
-        {
-            int new_score;
-            if (score < (new_score = evaluate(i, j, board, player)))
-            {
-
-                index[0] = i;
-                index[1] = j;
-                score = new_score;
-
-            }
+            if (alpha < new_score)  alpha = new_score;
+            if (beta <= alpha)  return;    
         }
-
-//    system("pause");
-
 }
 
 
 void algorithm_F(Board board, Player player, int index[]){
     
+    int row, col;
+    int score = 0;
+    bool chosen[ROW][COL] = {false};
+    char player_color = player.get_color();
+    for (int i = 0; i < ROW; i++)
+        for (int j = 0; j < COL; j++)
+        {
+            int temp;
+            if (player_color == board.get_cell_color(i,j))
+            {
+                if (board.get_capacity(i, j) - 1 == board.get_orbs_num(i, j))
+                {
+                    score += check_adjency_critical_connected(chosen, i, j, board, player_color);
+                }
+                    
+            }
+                
+        }
+        cout << score << endl;
+    cin >> row >> col;
+    index[0] = row;
+    index[1] = col;
 /*
     srand(time(NULL));
     int row, col;
@@ -120,48 +122,15 @@ void algorithm_F(Board board, Player player, int index[]){
                 score = new_score;
 
             }
-        }*/
-    cout << "F\n";
-            srand(time(NULL));
-    int row, col;
-    char color = player.get_color();
-    char enemy_color;
-    int score = ILLEGAL;
-    int alpha = -(INT_INFINITY);
-    int beta = INT_INFINITY;
-    if (color == RED)   enemy_color = BLUE;
-    else enemy_color = RED;
-
-    Player enemy(enemy_color);
-
-    for (int i = 0; i < ROW; i++)
-        for (int j = 0; j < COL; j++)
-        {
-            int new_score;
-            if (score < (new_score = find(i, j, board, player, enemy, ENEMY, 0, 1, alpha, beta)) && new_score != GAME_BROKEN)
-            {
-
-                    index[0] = i;
-                    index[1] = j;
-                    score = new_score;
-            }
-            if (alpha < new_score)  alpha = new_score;
-            if (beta <= alpha)  return;
-            
-            
-  //          cout << "F  (" << i << ',' << j << ") : " << new_score << endl;      
         }
- //       cout << "(row, col) = (" << index[0] << ',' << index[1] << ")\n";
- //       cout << "F:" << score << endl;
-  //          system("pause");  
-//    system("pause");
-
+*/
 }
 
 int evaluate(int row, int col, Board board, Player player)
 {
     int score = 0;
     char player_color = player.get_color();
+    bool chosen[ROW][COL] = {false};
 
     if (board.get_cell_color(row, col) != player_color && board.get_cell_color(row, col) != 'w')
         return ILLEGAL;
@@ -186,6 +155,10 @@ int evaluate(int row, int col, Board board, Player player)
                     
                     if (board.get_capacity(i, j) - 1 == board.get_orbs_num(i, j))
                         score += 2;
+                }
+                if (board.get_capacity(i, j) - 1 == board.get_orbs_num(i, j))
+                {
+                    score += check_adjency_critical_connected(chosen, i, j, board, player_color);
                 }
                     
             }
@@ -238,6 +211,46 @@ int check_adjency_critical(int row, int col, Board board, char player)
     return score;
 }
 
+
+int check_adjency_critical_connected(bool chosen[][COL], int row, int col, Board board, char player)
+{
+    int number = 0;
+    if (row < ROW - 1)    // down
+        if (board.get_cell_color(row + 1, col) == player)
+            if (board.get_orbs_num(row + 1, col) == board.get_capacity(row + 1, col) - 1 && !chosen[row + 1][col])
+            {
+                number++;
+                chosen[row + 1][col] = true;
+            }
+                
+                            
+    if (row > 0)    
+        if (board.get_cell_color(row - 1, col) == player)
+            if (board.get_orbs_num(row - 1, col) == board.get_capacity(row - 1, col) - 1 && !chosen[row - 1][col])
+            {
+                number++;
+                chosen[row - 1][col] = true;
+            }
+                            // up
+    if (col > 0)    
+        if (board.get_cell_color(row, col - 1) == player)
+            if (board.get_orbs_num(row, col - 1) == board.get_capacity(row, col - 1) - 1 && !chosen[row][col - 1])
+            {
+                number++;
+                chosen[row][col - 1] = true;
+            }
+                            // left
+    if (col < COL - 1) 
+        if (board.get_cell_color(row, col + 1) == player)
+            if (board.get_orbs_num(row, col + 1) == board.get_capacity(row, col + 1) - 1 && !chosen[row][col + 1])
+            {
+                number++;
+                chosen[row][col + 1] = true;
+            }     // right
+
+    return 2 * number;
+}
+
 int block_type(int row, int col)
 {
     if (row == 0 || col == 0 || row == ROW - 1 || col == COL - 1)
@@ -257,89 +270,6 @@ bool place_legal(int row, int col, Board board, Player player)
     else return true;
 }
 
-int Find(int row, int col, Board board, Player player, Player enemy, int depth, int T)
-{
-    char player_color;
-
-    if (depth % 2 == 0) 
-    {
-        
-        player_color = player.get_color();
-        if (board.get_cell_color(row, col) != player_color && board.get_cell_color(row, col) != 'w')
-            return ILLEGAL;
-        else board.place_orb(row, col, &player);
-    }
-
-    int score = ILLEGAL;
-
-        
-    if (depth >= T - 1)     // achieve recurrsive depth
-    {
-   //     cout << "A\n";
-        for (int i = 0; i < ROW; i++)        // highest score
-            for (int j = 0; j < COL; j++)
-            {
-                int new_score;
-                if (score < (new_score = evaluate(i, j, board, player)))
-                    score = new_score;         
-            }
-        return score;
-    }
-
-               
-    if (depth % 2 == 0)     // enemy turn
-    {
-        int position[2] = {0, 0};
-        for (int i = 0; i < ROW; i++)       // find least score
-            for (int j = 0; j < COL; j++)
-            {
-                int new_score;
-     /*           if (counter >= 55 && T == 5 && i == 3 && j == 5)
-                {
-
-                    board.print_current_board(3, 5, 0);
-                    system("pause");
-                }*/
-   /*             if (counter >= 55 && T == 5 && i == 4 && j == 0)
-                {
-                    Board board_copy = board;
-                    board.print_current_board(4, 0, 0);
-                    cout << board.get_cell_color(4,0) << endl;
-                     cout << enemy.get_color() << endl;
-                     board_copy.place_orb(4, 0, &enemy);
-                     cout << board.get_cell_color(4,0) << endl;
-                     cout << enemy.get_color() << endl;
-                     board_copy.print_current_board(4, 0, 1);
-             //       system("pause");
-                }*/
-                if (score < (new_score = evaluate(i, j, board, enemy)) && new_score != ILLEGAL)
-                {
-                    score = new_score;
-                    position[0] = i;
-                    position[1] = j;
-                }
-                
-            }
-         
-        board.place_orb(position[0], position[1], &enemy);
-
-
-        if (game_result(board, player) == LOSE)   return LOSE_GAME;
-        depth++;
-    }
-    score = ILLEGAL;
-    // my turn
-    
-    for (int i = 0; i < ROW; i++)        // highest score
-        for (int j = 0; j < COL; j++)
-        {
-            int new_score;
-            if (score < (new_score = Find(i, j, board, player, enemy, depth + 1, T)))
-                score = new_score;         
-        }
-    return score;
-    
-}
 
 int find(int row, int col, Board board, Player player, Player enemy, bool choose, int depth, int T, int alpha, int beta)
 {
