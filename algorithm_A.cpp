@@ -18,36 +18,19 @@ using namespace std;
 #define INT_INFINITY 1000000000
 #define MY true
 #define ENEMY false
-/******************************************************
- * In your algorithm, you can just use the the funcitons
- * listed by TA to get the board information.(functions 
- * 1. ~ 4. are listed in next block)
- * 
- * The STL library functions is not allowed to use.
-******************************************************/
 
-/*************************************************************************
- * 1. int board.get_orbs_num(int row_index, int col_index)
- * 2. int board.get_capacity(int row_index, int col_index)
- * 3. char board.get_cell_color(int row_index, int col_index)
- * 4. void board.print_current_board(int row_index, int col_index, int round)
- * 
- * 1. The function that return the number of orbs in cell(row, col)
- * 2. The function that return the orb capacity of the cell(row, col)
- * 3. The function that return the color fo the cell(row, col)
- * 4. The function that print out the current board statement
-*************************************************************************/
+
 int evaluate(int row, int col, Board board, Player player);
 int game_result(Board board, Player player);
 int check_adjency_critical(int row, int col, Board board, char player);
 int block_type(int row, int col);
 
-int check_adjency_critical_connected(bool chosen[][COL], int row, int col, Board board, char player);
+int check_adjency_critical_connected(bool record_counted[][COL], int row, int col, Board board, char player);
 
-int find(int row, int col, Board board, Player player, Player enemy, bool choose, int depth,int T, int alpha, int beta);
-    // T should be odd
+int find(int row, int col, Board board, Player player, Player enemy, bool turn, int depth,int MAX_depth, int alpha, int beta);
+    // MAX_depth should be odd
 
-void algorithm_H(Board board, Player player, int index[])
+void algorithm_A(Board board, Player player, int index[])
 {
     srand(time(NULL));
     int row, col;
@@ -58,7 +41,6 @@ void algorithm_H(Board board, Player player, int index[])
     int beta = INT_INFINITY;
     if (color == RED)   enemy_color = BLUE;
     else enemy_color = RED;
-
     Player enemy(enemy_color);
 
     for (int i = 0; i < ROW; i++)
@@ -77,60 +59,11 @@ void algorithm_H(Board board, Player player, int index[])
         }
 }
 
-
-void algorithm_F(Board board, Player player, int index[]){
-    
-    int row, col;
-    int score = 0;
-    bool chosen[ROW][COL] = {false};
-    char player_color = player.get_color();
-    for (int i = 0; i < ROW; i++)
-        for (int j = 0; j < COL; j++)
-        {
-            int temp;
-            if (player_color == board.get_cell_color(i,j))
-            {
-                if (board.get_capacity(i, j) - 1 == board.get_orbs_num(i, j))
-                {
-                    score += check_adjency_critical_connected(chosen, i, j, board, player_color);
-                }
-                    
-            }
-                
-        }
-        cout << score << endl;
-    cin >> row >> col;
-    index[0] = row;
-    index[1] = col;
-/*
-    srand(time(NULL));
-    int row, col;
-    int color = player.get_color();
-
-    int score = ILLEGAL;
-
- 
-    for (int i = 0; i < ROW; i++)
-        for (int j = 0; j < COL; j++)
-        {
-            int new_score;
-            if (score < (new_score = evaluate(i, j, board, player)))
-            {
-
-                index[0] = i;
-                index[1] = j;
-                score = new_score;
-
-            }
-        }
-*/
-}
-
 int evaluate(int row, int col, Board board, Player player)
 {
     int score = 0;
     char player_color = player.get_color();
-    bool chosen[ROW][COL] = {false};
+    bool record_counted[ROW][COL] = {false};
 
     if (board.get_cell_color(row, col) != player_color && board.get_cell_color(row, col) != 'w')
         return ILLEGAL;
@@ -158,7 +91,7 @@ int evaluate(int row, int col, Board board, Player player)
                 }
                 if (board.get_capacity(i, j) - 1 == board.get_orbs_num(i, j))
                 {
-                    score += check_adjency_critical_connected(chosen, i, j, board, player_color);
+                    score += check_adjency_critical_connected(record_counted, i, j, board, player_color);
                 }
                     
             }
@@ -212,40 +145,40 @@ int check_adjency_critical(int row, int col, Board board, char player)
 }
 
 
-int check_adjency_critical_connected(bool chosen[][COL], int row, int col, Board board, char player)
+int check_adjency_critical_connected(bool record_counted[][COL], int row, int col, Board board, char player)
 {
     int number = 0;
     if (row < ROW - 1)    // down
         if (board.get_cell_color(row + 1, col) == player)
-            if (board.get_orbs_num(row + 1, col) == board.get_capacity(row + 1, col) - 1 && !chosen[row + 1][col])
+            if (board.get_orbs_num(row + 1, col) == board.get_capacity(row + 1, col) - 1 && !record_counted[row + 1][col])
             {
                 number++;
-                chosen[row + 1][col] = true;
+                record_counted[row + 1][col] = true;
             }
                 
                             
     if (row > 0)    
         if (board.get_cell_color(row - 1, col) == player)
-            if (board.get_orbs_num(row - 1, col) == board.get_capacity(row - 1, col) - 1 && !chosen[row - 1][col])
+            if (board.get_orbs_num(row - 1, col) == board.get_capacity(row - 1, col) - 1 && !record_counted[row - 1][col])
             {
                 number++;
-                chosen[row - 1][col] = true;
+                record_counted[row - 1][col] = true;
             }
                             // up
     if (col > 0)    
         if (board.get_cell_color(row, col - 1) == player)
-            if (board.get_orbs_num(row, col - 1) == board.get_capacity(row, col - 1) - 1 && !chosen[row][col - 1])
+            if (board.get_orbs_num(row, col - 1) == board.get_capacity(row, col - 1) - 1 && !record_counted[row][col - 1])
             {
                 number++;
-                chosen[row][col - 1] = true;
+                record_counted[row][col - 1] = true;
             }
                             // left
     if (col < COL - 1) 
         if (board.get_cell_color(row, col + 1) == player)
-            if (board.get_orbs_num(row, col + 1) == board.get_capacity(row, col + 1) - 1 && !chosen[row][col + 1])
+            if (board.get_orbs_num(row, col + 1) == board.get_capacity(row, col + 1) - 1 && !record_counted[row][col + 1])
             {
                 number++;
-                chosen[row][col + 1] = true;
+                record_counted[row][col + 1] = true;
             }     // right
 
     return 2 * number;
@@ -271,10 +204,10 @@ bool place_legal(int row, int col, Board board, Player player)
 }
 
 
-int find(int row, int col, Board board, Player player, Player enemy, bool choose, int depth, int T, int alpha, int beta)
+int find(int row, int col, Board board, Player player, Player enemy, bool turn, int depth, int MAX_depth, int alpha, int beta)
 {
     int score = ILLEGAL;
-    if (depth == T)
+    if (depth == MAX_depth)
     {
         if (place_legal(row, col, board, enemy))   board.place_orb(row, col, &enemy);
         else return GAME_BROKEN;
@@ -291,7 +224,7 @@ int find(int row, int col, Board board, Player player, Player enemy, bool choose
             }
         return score;
     }
-    if (choose == MY)
+    if (turn == MY)
     {
         if (place_legal(row, col, board, enemy))   board.place_orb(row, col, &enemy);
         else return GAME_BROKEN;
@@ -302,7 +235,7 @@ int find(int row, int col, Board board, Player player, Player enemy, bool choose
         for (int i = 0; i < ROW; i++)
             for (int j = 0; j < COL; j++)
             {
-                int new_score = find(i, j, board, player, enemy, !choose, depth + 1, T, alpha, beta);
+                int new_score = find(i, j, board, player, enemy, !turn, depth + 1, MAX_depth, alpha, beta);
                 if (score < new_score && new_score != GAME_BROKEN)
                 {
                     score = new_score;
@@ -313,7 +246,7 @@ int find(int row, int col, Board board, Player player, Player enemy, bool choose
         return score;
     
     }
-    if (choose == ENEMY)
+    if (turn == ENEMY)
     {
         if (place_legal(row, col, board, player))   board.place_orb(row, col, &player);
         else return GAME_BROKEN;
@@ -323,7 +256,7 @@ int find(int row, int col, Board board, Player player, Player enemy, bool choose
         for (int i = 0; i < ROW; i++)
             for (int j = 0; j < COL; j++)
             {
-                int new_score = find(i, j, board, player, enemy, !choose, depth + 1, T, alpha, beta);
+                int new_score = find(i, j, board, player, enemy, !turn, depth + 1, MAX_depth, alpha, beta);
                 if (score > new_score && new_score >= ILLEGAL)
                 {
                     score = new_score;
